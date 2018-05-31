@@ -1,2 +1,1 @@
-### react-express-template
 # LosAngelesNeighborhoods
