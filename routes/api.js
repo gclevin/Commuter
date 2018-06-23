@@ -11,7 +11,6 @@ let neighborhoodsDatabase = [ {neighborhood:"Westwood", city:"Los Angeles"},
 							  {neighborhood:"Studio City", city:"Los Angeles"}];
 
 function get(link, neighborhood, maxTripLength) {
-	console.log(neighborhood);
 	return new Promise (function(resolve, reject) {
 	 	request({
         	url: link,
@@ -32,12 +31,12 @@ function get(link, neighborhood, maxTripLength) {
 	})
 }
 
-router.get('/get/:destination/:maxTripLength/:arrivalTime', function(req, res, next) {
+ router.post('/car', function(req, res) {
 
 	//Prepare and calculate parameters
-	let maxTripLength = req.params.maxTripLength*60;
-	let destination = req.params.destination;
-	let arrivalTime = req.params.arrivalTime;
+	let maxTripLength = req.body.maxTripLength*60;
+	let destination = req.body.destination;
+	let arrivalTime = req.body.arrivalTime;
 	let date = new Date();
     date.setDate(date.getDate() + (1 + 7 - date.getDay()) % 7);
     date.setHours( arrivalTime,0,0,0 );
