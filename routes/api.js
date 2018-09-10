@@ -8,9 +8,47 @@ router.use(bodyParser.urlencoded({ extended: false }));
 
 //Toy Database
 let neighborhoodsDatabase = [ {neighborhood:"Westwood", city:"Los Angeles"},
-							  {neighborhood:"Studio City", city:"Los Angeles"}];
+							  {neighborhood:"Studio City", city:"Los Angeles"},
+							  {neighborhood:"Venice", city:"Los Angeles"}];
 
-function get(link, neighborhood, maxTripLength) {
+
+router.post('/car', function(req, res) {
+
+ 	let parameters = prepareParameters(req, "car");
+ 	let promises = createPromises(parameters);
+ 	
+	Promise.all(promises).then(function(values){
+		let toSend = values.filter(function(x){
+        	return (x != null);
+        });
+		res.json(toSend);
+	}).catch(function(error){
+		res.json(error);
+	});
+
+});
+
+router.post('/transit', function(req, res) {
+
+ 	let parameters = prepareParameters(req, "transit");
+ 	let promises = createPromises(parameters);
+ 	
+	Promise.all(promises).then(function(values){
+		let toSend = values.filter(function(x){
+        	return (x != null);
+        });
+		res.json(toSend);
+	}).catch(function(error){
+		res.json(error);
+	});
+
+});
+
+module.exports = router;
+
+//Utility Methods
+
+function createPromise(link, neighborhood, maxTripLength) {
 	return new Promise (function(resolve, reject) {
 	 	request({
         	url: link,
@@ -31,33 +69,32 @@ function get(link, neighborhood, maxTripLength) {
 	})
 }
 
- router.post('/car', function(req, res) {
+function prepareParameters(req, travelMode) {
+	let parameters = {};
 
-	//Prepare and calculate parameters
-	let maxTripLength = req.body.maxTripLength*60;
-	let destination = req.body.destination;
-	let arrivalTime = req.body.arrivalTime;
+	parameters.maxTripLength = req.body.maxTripLength*60;
+	parameters.destination = req.body.destination;
+	parameters.arrivalTime = req.body.arrivalTime;
+	parameters.travelMode = travelMode;
+
 	let date = new Date();
     date.setDate(date.getDate() + (1 + 7 - date.getDay()) % 7);
-    date.setHours( arrivalTime,0,0,0 );
-   
+    date.setHours( parameters.arrivalTime,0,0,0 );
+    parameters.date = date;
+
+
+    return parameters;
+}
+
+function createPromises(parameters) {
 	let promises = [];
 	for (var i = 0; i < neighborhoodsDatabase.length; i++) {
-    	let link = 'https://maps.googleapis.com/maps/api/distancematrix/json?origins=' + neighborhoodsDatabase[i].neighborhood + neighborhoodsDatabase[i].city + '&destinations=' + destination + 'arrival_time=' + date.getTime() + '&key=AIzaSyBBAXXISm2tD5pvEYg132Zaezu7zZt-rl0';
+		let link = 'https://maps.googleapis.com/maps/api/distancematrix/json?origins=' + neighborhoodsDatabase[i].neighborhood + neighborhoodsDatabase[i].city + '&destinations=' + parameters.destination + 'arrival_time=' + parameters.date.getTime() + '&mode=' + parameters.travelMode + '&key=AIzaSyBBAXXISm2tD5pvEYg132Zaezu7zZt-rl0';
       	// let link = 'https://maps.googleapis.com/maps/api/distancematrix/json?origins=3522+greenfield+ave.+los+angeles&destinations=' + neighborhoodsDatabase[i] + 'arrival_time=1528128000&key=AIzaSyBBAXXISm2tD5pvEYg132Zaezu7zZt-rl0';
 
-	  	let promise = get(link, neighborhoodsDatabase[i], maxTripLength);
+	  	let promise = createPromise(link, neighborhoodsDatabase[i], parameters.maxTripLength);
 	  	promises.push(promise);
 	}
 	
-	Promise.all(promises).then(function(values){
-		let toSend = values.filter(function(x){
-        	return (x != null);
-        });
-		res.json(toSend);
-	}).catch(function(error){
-		res.json(error);
-	});
-});
-
-module.exports = router;
+	return promises;
+}
