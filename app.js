@@ -3,11 +3,12 @@ const path = require('path');
 const PORT = 3000;
 
 const app = express();
+app.set('view engine', 'pug');
 app.use(express.static(path.join(__dirname, 'client/build')));
-app.use('/api', require('./routes/api'));
+app.use('/commuter', require('./controllers/routes'));
 
 app.get('*', (req, res) => {
-	res.sendFile(path.join(__dirname + '/client/build/index.html'));
+	res.redirect('/commuter');
 });
 
 app.use((req, res, next) => {

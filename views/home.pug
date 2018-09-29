@@ -1,0 +1,18 @@
+extends base.pug
+block content
+
+  h1 Welcome! First, please tell us how you'd like to commute.
+  form(method="POST")
+    .form-group
+      input(type='radio', name='modeOfTransportation', value='car', checked='')
+      |  Car
+      br
+      input(type='radio', name='modeOfTransportation', value='transit')
+      |  Public Transportation
+      br
+    .form-group
+    button.btn.btn-success(type="submit") Go!
+
+
+
+          

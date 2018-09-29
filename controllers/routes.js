@@ -12,8 +12,28 @@ let neighborhoodsDatabase = [ {neighborhood:"Westwood", city:"Los Angeles"},
 							  {neighborhood:"Venice", city:"Los Angeles"}];
 
 
-router.post('/car', function(req, res) {
 
+router.get('/', (req, res) => {
+  res.render('home.pug');
+});
+
+router.post('/', (req, res) => {
+  if (req.body.modeOfTransportation == 'car') {
+    res.redirect('/commuter/car');
+  } else {
+  	res.redirect('/commuter/transit');
+  }
+});
+
+router.get('/car', (req, res) => {
+  res.render('tripInformation.pug', {
+	neighborhoods: [],
+	travelMode: "Car",
+    message: "",
+    });
+});
+
+router.post('/car', function(req, res) {
  	let parameters = prepareParameters(req, "car");
  	let promises = createPromises(parameters);
  	
@@ -21,11 +41,32 @@ router.post('/car', function(req, res) {
 		let toSend = values.filter(function(x){
         	return (x != null);
         });
-		res.json(toSend);
+
+		let message = "";
+		if (!toSend.length) {
+			message = "No neighborhoods fit your criteria."
+		}
+		res.render('tripInformation.pug', {
+			neighborhoods: toSend,
+			travelMode: "Car",
+            message: message,
+          });
 	}).catch(function(error){
-		res.json(error);
+		res.render('tripInformation.pug', {
+			neighborhoods: [],
+			travelMode: "Car",
+            message: error,
+          });
 	});
 
+});
+
+router.get('/transit', (req, res) => {
+    res.render('tripInformation.pug', {
+		neighborhoods: [],
+		travelMode: "Public Transportation",
+    	message: "",
+    });
 });
 
 router.post('/transit', function(req, res) {
@@ -37,9 +78,23 @@ router.post('/transit', function(req, res) {
 		let toSend = values.filter(function(x){
         	return (x != null);
         });
-		res.json(toSend);
+
+        let message = "";
+		if (!toSend.length) {
+			message = "No neighborhoods fit your criteria."
+		}
+
+		res.render('tripInformation.pug', {
+			neighborhoods: toSend,
+			travelMode: "Public Transportation",
+            message: message,
+          });
 	}).catch(function(error){
-		res.json(error);
+		res.render('tripInformation.pug', {
+			neighborhoods: [],
+			travelMode: "Public Transportation",
+            message: error,
+          });
 	});
 
 });
@@ -55,13 +110,19 @@ function createPromise(link, neighborhood, maxTripLength) {
         	json: true
       	}, function (error, response, body) {
         	if (!error && response.statusCode === 200) {
-          		let tripDuration = body.rows[0].elements[0].duration.value;
-          		if (parseInt(tripDuration) < maxTripLength) {
-          			let toReturn = {neighborhood:neighborhood.neighborhood, city:neighborhood.city, duration:tripDuration};
-          			resolve(toReturn);
-          		} else {
-          			resolve(null);
-          		}
+        		if (body.rows[0].elements[0].status == "NOT_FOUND") {
+        			reject("Invalid Address");
+        		} else {
+        			let tripDuration = body.rows[0].elements[0].duration.value;
+          			if (parseInt(tripDuration) < maxTripLength) {
+          				let toReturn = {neighborhood:neighborhood.neighborhood, city:neighborhood.city, duration:Math.round(tripDuration/60)};
+          				resolve(toReturn);
+          			} else {
+          				resolve(null);
+          			}
+        		}
+
+          		
         	} else {
         		reject(error);
         	}
@@ -90,7 +151,6 @@ function createPromises(parameters) {
 	let promises = [];
 	for (var i = 0; i < neighborhoodsDatabase.length; i++) {
 		let link = 'https://maps.googleapis.com/maps/api/distancematrix/json?origins=' + neighborhoodsDatabase[i].neighborhood + neighborhoodsDatabase[i].city + '&destinations=' + parameters.destination + 'arrival_time=' + parameters.date.getTime() + '&mode=' + parameters.travelMode + '&key=AIzaSyBBAXXISm2tD5pvEYg132Zaezu7zZt-rl0';
-      	// let link = 'https://maps.googleapis.com/maps/api/distancematrix/json?origins=3522+greenfield+ave.+los+angeles&destinations=' + neighborhoodsDatabase[i] + 'arrival_time=1528128000&key=AIzaSyBBAXXISm2tD5pvEYg132Zaezu7zZt-rl0';
 
 	  	let promise = createPromise(link, neighborhoodsDatabase[i], parameters.maxTripLength);
 	  	promises.push(promise);

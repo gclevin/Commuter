@@ -1,0 +1,25 @@
+extends base.pug
+block content
+
+  h1 #{travelMode}
+  form(method="POST")
+    .form-group
+      label(for="destination") Desitnation Address:
+      input.form-control(type="text", name="destination", id="destination", placeholder="123 Example Blvd. Los Angeles, CA 90210" required)
+    .form-group
+      label(for="arrivalTime") Arrival Time:
+      input.form-control(type="number", name="arrivalTime", id="arrivalTime", max="12", required)
+    .form-group
+      label(for="maxTripLength") Maximum Trip Length (In Minutes):
+      input.form-control(type="number", name="maxTripLength", id="maxTripLength", required) 
+    .form-group
+    button.btn.btn-success(type="submit") Search
+  p(class='text-danger' style="font-size:160%;") #{message}
+
+  if neighborhoods.length
+    h2 Where you can live:
+    each neighborhood in neighborhoods
+      h4 #{neighborhood.neighborhood}, #{neighborhood.city}, estimated travel time: #{neighborhood.duration} minutes 
+
+
+          
